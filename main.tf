@@ -77,8 +77,7 @@ resource "aws_lb" "alb_terraform" {
   name               = "alb_terraform"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = ["${aws_security_group.allow_http.id}"]
-  subnets            = ["${aws_subnet.subnet_1_terraform.id}"]
+  subnets            = ["aws_subnet.public-a.id", "aws_subnet.public-b.id"]
 }
 
 resource "aws_lb_listener" "alb_listner_terraform" {
@@ -107,6 +106,11 @@ resource "aws_lb_target_group_attachment" "target_group_attachment_tf" {
 }
 
 ####AUTOSCALING
+resource "aws_placement_group" "placement_grp_tf" {
+  name     = "placement_grp_tf"
+  strategy = "cluster"
+}
+
 resource "aws_autoscaling_group" "autoscaling_tf" {
   name                      = "as-terraform-tp"
   max_size                  = 3
@@ -115,9 +119,9 @@ resource "aws_autoscaling_group" "autoscaling_tf" {
   health_check_type         = "ELB"
   desired_capacity          = 1
   force_delete              = true
-  placement_group           = "${aws_placement_group.test.id}"
-  launch_configuration      = "${aws_launch_configuration.foobar.name}"
-  vpc_zone_identifier       = ["${aws_subnet.public-a.id}", "${aws_subnet.public-b.id}"]
+  placement_group           = aws_placement_group.placement_grp_tf.id
+  launch_configuration      = aws_launch_configuration.launch_config_terraform.name
+  vpc_zone_identifier       = aws_subnet.public-a.id
 
   initial_lifecycle_hook {
     name                 = "autoscaling"
@@ -130,7 +134,7 @@ resource "aws_autoscaling_group" "autoscaling_tf" {
 } 
 
 ####LAUNCH CONFIGURATION
-resource "aws_launch_configuration" "launch_configuration_terraform" {
+resource "aws_launch_configuration" "launch_config_terraform" {
   image_id = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   security_groups = aws_security_group.allow_http.id
