@@ -21,6 +21,7 @@ resource "aws_subnet" "public-b" {
   }
 }
 
+
 resource "aws_subnet" "public-c" {
   vpc_id     = aws_vpc.default.id
   cidr_block = "10.0.7.0/24"
